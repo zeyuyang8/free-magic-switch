@@ -16,16 +16,22 @@ If macOS asks for a passkey while pairing, it appears next to the menu-bar icon.
 
 ## Install
 
-On each Mac, from this folder:
+On each Mac, run one of these:
 
 ```bash
-./install.sh
+npx github:zeyuyang8/free-magic-switch
 ```
 
-This builds the app, copies it to `/Applications`, starts it, and sets it to launch at login (via `~/Library/LaunchAgents/local.devicehop.plist`). If Swift is missing, it tells you to run `xcode-select --install` first. To remove it:
+```bash
+curl -fsSL https://raw.githubusercontent.com/zeyuyang8/free-magic-switch/main/install.sh | bash
+```
+
+Either one builds the app from source, copies it to `/Applications`, starts it, and sets it to launch at login (via `~/Library/LaunchAgents/local.devicehop.plist`). If Swift is missing, it tells you to run `xcode-select --install` first. From a clone, `./install.sh` does the same.
+
+To uninstall:
 
 ```bash
-./install.sh --uninstall
+npx github:zeyuyang8/free-magic-switch --uninstall
 ```
 
 ## Build only

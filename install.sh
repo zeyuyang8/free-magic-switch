@@ -1,9 +1,32 @@
 #!/bin/bash
 # Installs DeviceHop to /Applications and starts it at login.
-# Usage: ./install.sh            install or update
-#        ./install.sh --uninstall
+# Usage: install.sh [--uninstall | --help]
+#   npx github:zeyuyang8/free-magic-switch
+#   curl -fsSL https://raw.githubusercontent.com/zeyuyang8/free-magic-switch/main/install.sh | bash
 set -euo pipefail
-cd "$(dirname "$0")"
+
+REPO="https://github.com/zeyuyang8/free-magic-switch"
+
+# npx runs this through a symlink, and curl | bash has no file at all; find or fetch the sources.
+SELF="${BASH_SOURCE[0]:-}"
+SRC=""
+if [[ -n "$SELF" && -e "$SELF" ]]; then
+  SRC="$(cd "$(dirname "$(readlink -f "$SELF")")" && pwd)"
+fi
+if [[ -z "$SRC" || ! -d "$SRC/Sources/DeviceHop" ]]; then
+  TMP="$(mktemp -d)"
+  echo "Downloading DeviceHop source…"
+  git clone --quiet --depth 1 "$REPO" "$TMP/src"
+  exec bash "$TMP/src/install.sh" "$@"
+fi
+cd "$SRC"
+
+if [[ "${1:-}" == "--help" ]]; then
+  echo "DeviceHop installer (source: $SRC)"
+  echo "  install.sh              build, install to /Applications, start at login"
+  echo "  install.sh --uninstall  remove the app and login item"
+  exit 0
+fi
 
 APP_DEST="/Applications/DeviceHop.app"
 AGENT="$HOME/Library/LaunchAgents/local.devicehop.plist"

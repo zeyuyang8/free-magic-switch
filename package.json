@@ -1,0 +1,22 @@
+{
+  "name": "free-magic-switch",
+  "version": "1.0.0",
+  "description": "Free macOS menu-bar app to switch a Magic Keyboard and Magic Mouse between Macs",
+  "bin": {
+    "free-magic-switch": "install.sh"
+  },
+  "files": [
+    "install.sh",
+    "build.sh",
+    "Package.swift",
+    "Sources"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zeyuyang8/free-magic-switch.git"
+  },
+  "license": "MIT"
+}
