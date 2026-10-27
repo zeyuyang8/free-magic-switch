@@ -19,7 +19,7 @@ If macOS asks for a passkey while pairing, it appears next to the menu-bar icon.
 On each Mac, run one of these:
 
 ```bash
-npx github:zeyuyang8/free-magic-switch
+npx free-magic-switch
 ```
 
 ```bash
@@ -31,7 +31,7 @@ Either one builds the app from source, copies it to `/Applications`, starts it, 
 To uninstall:
 
 ```bash
-npx github:zeyuyang8/free-magic-switch --uninstall
+npx free-magic-switch --uninstall
 ```
 
 ## Build only
