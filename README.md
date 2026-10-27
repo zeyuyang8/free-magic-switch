@@ -12,7 +12,17 @@ Run DeviceHop on every Mac. The copies find each other on your local network ove
 - **Shared key:** requests only count if both Macs use the same key, so others on your network can't take your keyboard. Set it under *Set Shared Key…*.
 - **Devices to switch:** choose which paired devices move. Anything named "Magic" is selected by default.
 
-If macOS asks for a passkey while pairing, it appears next to the menu-bar icon. Type it on the keyboard and press Return.
+The menu-bar panel shows each device's connection and battery level, lists the other Macs it found with **Send** and **Take** buttons, and keeps the shared key and update settings under **Settings**. If macOS asks for a passkey while pairing, it appears in the panel. Type it on the keyboard and press Return.
+
+## Updates
+
+DeviceHop checks npm shortly after launch and then every 6 hours. When a newer version exists, it rebuilds itself from that release's GitHub tag (`vX.Y.Z`) and restarts, but never in the middle of a switch. To get an **Update** button instead, turn off *Install updates automatically* in Settings. The update log is at `~/Library/Logs/DeviceHop-update.log`.
+
+To release a new version:
+
+```bash
+npm version minor && git push --follow-tags && npm publish --auth-type=web
+```
 
 ## Install
 
@@ -54,11 +64,15 @@ xattr -dr com.apple.quarantine DeviceHop.app
 
 - Unpairing uses a private IOBluetooth method (`-[IOBluetoothDevice remove]`), the same one `blueutil` uses. A future macOS release could break it.
 - If a device gets stuck, connect it to the target Mac with a cable. That always re-pairs it.
-- Rebuilding changes the ad-hoc signature, so macOS may ask for the permissions again.
+- Every rebuild, including automatic updates, changes the ad-hoc signature, so macOS may ask for the Bluetooth and Local Network permissions again.
+- The app is built from source on each Mac with the Command Line Tools, so it avoids SwiftUI features that need full Xcode, such as `@State`.
 
 ## Layout
 
-- `Sources/DeviceHop/Bluetooth.swift`: list, unpair, pair and connect devices (IOBluetooth)
+- `Sources/DeviceHop/DeviceHopApp.swift`: app entry point (SwiftUI `MenuBarExtra`)
+- `Sources/DeviceHop/ContentView.swift`: the menu-bar panel
+- `Sources/DeviceHop/AppModel.swift`: app state, the send/take flows, and update scheduling
+- `Sources/DeviceHop/Bluetooth.swift`: list devices and battery levels; unpair, pair and connect (IOBluetooth and IOKit)
 - `Sources/DeviceHop/Peers.swift`: Bonjour discovery and JSON-line messages between Macs (Network.framework)
-- `Sources/DeviceHop/AppDelegate.swift`: menu-bar UI and the send/take flows
+- `Sources/DeviceHop/Updater.swift`: checks npm for new versions and reinstalls from the release tag
 - `build.sh`: builds and wraps the binary into a signed `.app` with the required Info.plist keys

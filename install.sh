@@ -16,7 +16,7 @@ fi
 if [[ -z "$SRC" || ! -d "$SRC/Sources/DeviceHop" ]]; then
   TMP="$(mktemp -d)"
   echo "Downloading DeviceHop source…"
-  git clone --quiet --depth 1 "$REPO" "$TMP/src"
+  git clone --quiet --depth 1 ${DEVICEHOP_REF:+--branch "$DEVICEHOP_REF"} "$REPO" "$TMP/src"
   exec bash "$TMP/src/install.sh" "$@"
 fi
 cd "$SRC"

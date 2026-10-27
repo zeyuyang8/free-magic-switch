@@ -1,10 +1,23 @@
 import Foundation
 import IOBluetooth
+import IOKit
 
-struct BTDevice {
+struct BTDevice: Identifiable {
     let address: String
     let name: String
     let connected: Bool
+    var battery: Int?
+
+    var id: String { address }
+
+    var symbol: String {
+        let n = name.lowercased()
+        if n.contains("keyboard") { return "keyboard" }
+        if n.contains("mouse") { return "magicmouse" }
+        if n.contains("trackpad") { return "rectangle.and.hand.point.up.left" }
+        if n.contains("airpods") || n.contains("headphone") || n.contains("beats") { return "headphones" }
+        return "dot.radiowaves.left.and.right"
+    }
 }
 
 func normalizeAddress(_ a: String) -> String {
@@ -19,11 +32,31 @@ final class Bluetooth: NSObject, IOBluetoothDevicePairDelegate {
     private var pairToken = 0
 
     func pairedDevices() -> [BTDevice] {
+        let battery = batteryLevels()
         let list = (IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice]) ?? []
         return list.compactMap { d in
-            guard let addr = d.addressString else { return nil }
-            return BTDevice(address: normalizeAddress(addr), name: d.name ?? addr, connected: d.isConnected())
+            guard let raw = d.addressString else { return nil }
+            let addr = normalizeAddress(raw)
+            return BTDevice(address: addr, name: d.name ?? raw, connected: d.isConnected(), battery: battery[addr])
         }
+    }
+
+    private func batteryLevels() -> [String: Int] {
+        var result: [String: Int] = [:]
+        var iter: io_iterator_t = 0
+        guard IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching("AppleDeviceManagementHIDEventService"), &iter) == KERN_SUCCESS else {
+            return result
+        }
+        defer { IOObjectRelease(iter) }
+        var service = IOIteratorNext(iter)
+        while service != 0 {
+            let addr = IORegistryEntryCreateCFProperty(service, "DeviceAddress" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? String
+            let pct = IORegistryEntryCreateCFProperty(service, "BatteryPercent" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? Int
+            if let addr, let pct { result[normalizeAddress(addr)] = pct }
+            IOObjectRelease(service)
+            service = IOIteratorNext(iter)
+        }
+        return result
     }
 
     /// Disconnects and unpairs; returns addresses that failed.
