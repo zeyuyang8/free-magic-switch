@@ -33,7 +33,8 @@ AGENT="$HOME/Library/LaunchAgents/local.devicehop.plist"
 
 stop_running() {
   launchctl bootout "gui/$(id -u)" "$AGENT" 2>/dev/null || true
-  pkill -x DeviceHop 2>/dev/null || true
+  # -a: during a self-update DeviceHop is our ancestor, which pkill skips by default.
+  pkill -a -x DeviceHop 2>/dev/null || true
 }
 
 if [[ "${1:-}" == "--uninstall" ]]; then

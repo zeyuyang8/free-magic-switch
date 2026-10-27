@@ -209,7 +209,11 @@ final class AppModel: ObservableObject {
         updating = true
         status = "Installing \(v)… DeviceHop will restart"
         do {
-            try updater.install(v) { [weak self] in
+            try updater.install(v) { [weak self] status in
+                if status == 0 {
+                    Updater.relaunch()
+                    return
+                }
                 self?.updating = false
                 self?.status = "Update failed — see ~/Library/Logs/DeviceHop-update.log"
             }
