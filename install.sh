@@ -73,4 +73,4 @@ launchctl bootstrap "gui/$(id -u)" "$AGENT"
 
 echo
 echo "DeviceHop installed and running (keyboard icon in the menu bar)."
-echo "It will start automatically at login. Allow the Bluetooth and Local Network prompts."
+echo "It will start automatically at login. Allow the Bluetooth prompt."

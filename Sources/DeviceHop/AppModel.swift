@@ -55,11 +55,7 @@ final class AppModel: ObservableObject {
         let p = Peers(name: Host.current().localizedName ?? "Mac")
         p.handler = { [weak self] msg, reply in self?.handle(msg, reply: reply) }
         p.onChange = { [weak self, weak p] in self?.peerNames = p?.peers.keys.sorted() ?? [] }
-        do {
-            try p.start()
-        } catch {
-            status = "Network error: \(error.localizedDescription)"
-        }
+        p.start()
         peers = p
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in self?.checkForUpdates() }

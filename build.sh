@@ -29,9 +29,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleVersion</key><string>${VERSION}</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>LSUIElement</key><true/>
-  <key>NSBluetoothAlwaysUsageDescription</key><string>DeviceHop pairs and unpairs your keyboard and mouse.</string>
-  <key>NSLocalNetworkUsageDescription</key><string>DeviceHop talks to DeviceHop on your other Macs.</string>
-  <key>NSBonjourServices</key><array><string>_devicehop._tcp</string></array>
+  <key>NSBluetoothAlwaysUsageDescription</key><string>DeviceHop pairs your keyboard and mouse, and talks to DeviceHop on your other Macs.</string>
 </dict>
 </plist>
 PLIST
