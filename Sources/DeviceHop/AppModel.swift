@@ -89,11 +89,11 @@ final class AppModel: ObservableObject {
     // MARK: Switching
 
     func send(to peer: String) {
-        guard let peers else { return }
+        guard peers != nil else { return }
         let addrs = switchable()
         guard !addrs.isEmpty else { status = "No keyboard or mouse here to send"; return }
         begin("Contacting \(peer)…")
-        peers.send(Message(cmd: "ping", key: sharedKey), to: peer) { [weak self] reply in
+        self.request(Message(cmd: "ping", key: sharedKey), to: peer) { [weak self] reply in
             guard let self else { return }
             guard let reply, reply.ok == true else {
                 self.end(reply?.error ?? "\(peer) didn't respond")
@@ -103,7 +103,7 @@ final class AppModel: ObservableObject {
             _ = self.bt.release(addrs)
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 self.status = "Handing over to \(peer)…"
-                peers.send(Message(cmd: "acquire", key: self.sharedKey, addresses: addrs), to: peer) { reply in
+                self.request(Message(cmd: "acquire", key: self.sharedKey, addresses: addrs), to: peer) { reply in
                     if reply?.ok == true {
                         self.end("Sent to \(peer)")
                     } else {
@@ -116,9 +116,9 @@ final class AppModel: ObservableObject {
     }
 
     func take(from peer: String) {
-        guard let peers else { return }
+        guard peers != nil else { return }
         begin("Asking \(peer) to let go…")
-        peers.send(Message(cmd: "release", key: sharedKey), to: peer) { [weak self] reply in
+        self.request(Message(cmd: "release", key: sharedKey), to: peer) { [weak self] reply in
             guard let self else { return }
             guard let reply, let addrs = reply.addresses, !addrs.isEmpty else {
                 self.end(reply?.error ?? "\(peer) didn't respond")
@@ -131,7 +131,7 @@ final class AppModel: ObservableObject {
                     if failed.isEmpty {
                         self.end("Connected — devices are here")
                     } else {
-                        peers.send(Message(cmd: "acquire", key: self.sharedKey, addresses: failed), to: peer) { _ in }
+                        self.request(Message(cmd: "acquire", key: self.sharedKey, addresses: failed), to: peer) { _ in }
                         self.end("Pairing failed; returned to \(peer)")
                     }
                 }
@@ -139,8 +139,24 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func handle(_ m: Message, reply: @escaping (Message) -> Void) {
-        guard !sharedKey.isEmpty, m.key == sharedKey else {
+    /// Signs the request; a successful reply is only trusted if its signature checks out.
+    private func request(_ m: Message, to peer: String, completion: @escaping (Message?) -> Void) {
+        guard let peers else { completion(nil); return }
+        let key = sharedKey
+        peers.send(Auth.sign(m, key: key), to: peer) { reply in
+            guard let reply else { completion(nil); return }
+            if reply.ok == true, !Auth.verify(reply, key: key) {
+                completion(Message(cmd: "reply", ok: false, error: "Shared key doesn't match the other Mac"))
+                return
+            }
+            completion(reply)
+        }
+    }
+
+    private func handle(_ m: Message, reply rawReply: @escaping (Message) -> Void) {
+        let key = sharedKey
+        let reply: (Message) -> Void = { rawReply(Auth.sign($0, key: key)) }
+        guard Auth.verify(m, key: key) else {
             reply(Message(cmd: "reply", ok: false, error: "Shared key doesn't match"))
             return
         }

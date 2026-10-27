@@ -7,11 +7,12 @@ struct Message: Codable {
     var addresses: [String]?
     var ok: Bool?
     var error: String?
+    var ts: Int64?
+    var sig: String?
 }
 
 /// Finds other Macs running DeviceHop over Bluetooth LE and exchanges one JSON line per request.
-/// Every Mac is both a GATT server (answers requests) and a client (sends them). Both
-/// characteristics require encryption, so macOS bonds the two Macs on their first exchange.
+/// Every Mac is both a GATT server (answers requests) and a client (sends them).
 final class Peers: NSObject, CBPeripheralManagerDelegate, CBCentralManagerDelegate, CBPeripheralDelegate {
     static let serviceUUID = CBUUID(string: "A2A1D5B7-A491-4439-8FD4-FA42D18DC883")
     static let requestUUID = CBUUID(string: "416F6E6A-1BD6-4FA8-A4EF-76315C3C2F70")
@@ -74,8 +75,7 @@ final class Peers: NSObject, CBPeripheralManagerDelegate, CBCentralManagerDelega
         let id = outgoingID
         p.delegate = self
         client.connect(p)
-        // Generous, since the first exchange may wait on the user accepting a pairing prompt.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20) { [weak self] in
             guard let self, self.outgoingID == id else { return }
             self.finish(nil)
         }
@@ -156,10 +156,12 @@ final class Peers: NSObject, CBPeripheralManagerDelegate, CBCentralManagerDelega
 
     func peripheralManagerDidUpdateState(_ pm: CBPeripheralManager) {
         guard pm.state == .poweredOn, replyChar == nil else { return }
+        // No link-layer encryption: macOS won't pair two Macs for it ("Authentication is
+        // insufficient"). Messages are instead signed with the shared key (see Auth).
         let request = CBMutableCharacteristic(
-            type: Peers.requestUUID, properties: [.write], value: nil, permissions: [.writeEncryptionRequired])
+            type: Peers.requestUUID, properties: [.write], value: nil, permissions: [.writeable])
         let reply = CBMutableCharacteristic(
-            type: Peers.replyUUID, properties: [.notify], value: nil, permissions: [.readEncryptionRequired])
+            type: Peers.replyUUID, properties: [.notify], value: nil, permissions: [.readable])
         let name = CBMutableCharacteristic(
             type: Peers.nameUUID, properties: [.read], value: Data(myName.utf8), permissions: [.readable])
         let service = CBMutableService(type: Peers.serviceUUID, primary: true)
@@ -277,7 +279,6 @@ final class Peers: NSObject, CBPeripheralManagerDelegate, CBCentralManagerDelega
             fail("characteristic lookup", error)
             return
         }
-        // Subscribing needs encryption; the first time, macOS pairs the two Macs here.
         p.setNotifyValue(true, for: reply)
     }
 
