@@ -103,7 +103,8 @@ final class AppModel: ObservableObject {
             _ = self.bt.release(addrs)
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 self.status = "Handing over to \(peer)…"
-                self.request(Message(cmd: "acquire", key: self.sharedKey, addresses: addrs), to: peer) { reply in
+                let m = Message(cmd: "acquire", key: self.sharedKey, addresses: addrs, from: self.peers?.myName)
+                self.request(m, to: peer) { reply in
                     if reply?.ok == true {
                         self.end("Sent to \(peer)")
                     } else {
@@ -179,7 +180,19 @@ final class AppModel: ObservableObject {
             selected.formUnion(addrs)
             begin("Pairing \(addrs.count) device\(addrs.count == 1 ? "" : "s")…")
             bt.acquire(addrs) { [weak self] failed in
-                self?.end(failed.isEmpty ? "Connected — devices are here" : "Couldn't connect \(failed.count) device(s)")
+                guard let self else { return }
+                guard !failed.isEmpty else { self.end("Connected — devices are here"); return }
+                // The sender already unpaired these, so hand them back rather than leave them paired to nothing.
+                guard let sender = m.from else {
+                    self.end("Couldn't connect \(failed.count) device(s)")
+                    return
+                }
+                self.status = "Couldn't connect \(failed.count) device(s) — returning to \(sender)…"
+                self.request(Message(cmd: "acquire", key: self.sharedKey, addresses: failed), to: sender) { reply in
+                    self.end(reply?.ok == true
+                        ? "Couldn't connect \(failed.count) device(s); returned to \(sender)"
+                        : "Couldn't connect \(failed.count) device(s) — reconnect with a cable")
+                }
             }
         default:
             reply(Message(cmd: "reply", ok: false, error: "Unknown command"))

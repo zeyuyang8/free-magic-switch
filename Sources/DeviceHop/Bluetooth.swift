@@ -126,8 +126,7 @@ final class Bluetooth: NSObject, IOBluetoothDevicePairDelegate {
         pairToken += 1
         let token = pairToken
         pairCompletion = { ok in
-            if ok {
-                _ = d.openConnection()
+            if ok, d.isConnected() || d.openConnection() == kIOReturnSuccess {
                 done(true)
             } else {
                 retry()

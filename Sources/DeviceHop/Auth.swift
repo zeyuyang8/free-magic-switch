@@ -35,7 +35,7 @@ enum Auth {
             (m.addresses ?? []).joined(separator: ","),
             m.ok.map { $0 ? "1" : "0" } ?? "",
             m.error ?? "",
-        ].joined(separator: "|")
+        ].joined(separator: "|") + (m.from.map { "|" + $0 } ?? "")
         let code = HMAC<SHA256>.authenticationCode(for: Data(body.utf8), using: SymmetricKey(data: Data(key.utf8)))
         return code.map { String(format: "%02x", $0) }.joined()
     }

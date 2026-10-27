@@ -9,6 +9,7 @@ struct Message: Codable {
     var error: String?
     var ts: Int64?
     var sig: String?
+    var from: String?
 }
 
 /// Finds other Macs running DeviceHop over Bluetooth LE and exchanges one JSON line per request.
