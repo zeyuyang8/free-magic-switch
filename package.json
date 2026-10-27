@@ -1,6 +1,6 @@
 {
   "name": "free-magic-switch",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Free macOS menu-bar app to switch a Magic Keyboard and Magic Mouse between Macs",
   "bin": {
     "free-magic-switch": "install.sh"
