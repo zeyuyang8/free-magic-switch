@@ -14,7 +14,21 @@ Run DeviceHop on every Mac. The copies find each other on your local network ove
 
 If macOS asks for a passkey while pairing, it appears next to the menu-bar icon. Type it on the keyboard and press Return.
 
-## Build
+## Install
+
+On each Mac, from this folder:
+
+```bash
+./install.sh
+```
+
+This builds the app, copies it to `/Applications`, starts it, and sets it to launch at login (via `~/Library/LaunchAgents/local.devicehop.plist`). If Swift is missing, it tells you to run `xcode-select --install` first. To remove it:
+
+```bash
+./install.sh --uninstall
+```
+
+## Build only
 
 Requires macOS 13+ and Swift (Xcode or the Command Line Tools).
 
