@@ -7,7 +7,7 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "DeviceHop",
-            linkerSettings: [.linkedFramework("IOBluetooth"), .linkedFramework("Network")]
+            linkerSettings: [.linkedFramework("IOBluetooth"), .linkedFramework("CoreBluetooth")]
         )
     ]
 )
