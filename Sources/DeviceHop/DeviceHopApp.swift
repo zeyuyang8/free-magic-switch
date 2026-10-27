@@ -21,12 +21,15 @@ struct DeviceHopApp: App {
     }
 }
 
-/// Dev aid: DEVICEHOP_SNAPSHOT=out.png [DEVICEHOP_DARK=1] renders the panel with sample data.
+/// Dev aid: DEVICEHOP_SNAPSHOT=out.png [DEVICEHOP_DARK=1] [DEVICEHOP_REAL_DEVICES=1] renders the panel.
 enum Snapshot {
     static func render(to path: String) {
         _ = NSApplication.shared
-        let dark = ProcessInfo.processInfo.environment["DEVICEHOP_DARK"] != nil
-        let view = ContentView(model: AppModel(preview: true))
+        let env = ProcessInfo.processInfo.environment
+        let dark = env["DEVICEHOP_DARK"] != nil
+        let model = AppModel(preview: true)
+        if env["DEVICEHOP_REAL_DEVICES"] != nil { model.devices = Bluetooth().pairedDevices() }
+        let view = ContentView(model: model)
             .background(Color(nsColor: .windowBackgroundColor))
         let host = NSHostingView(rootView: view)
         host.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)

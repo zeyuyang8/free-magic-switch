@@ -9,8 +9,8 @@ Run DeviceHop on every Mac. The copies find and talk to each other directly over
 - **Send devices to → Mac:** this Mac disconnects and unpairs the selected devices. The other Mac then pairs and connects them.
 - **Take devices from → Mac:** the other Mac releases its devices, and this Mac pairs them.
 - If the other Mac can't be reached partway through, the devices are reclaimed, so they don't end up paired to nothing.
-- **Shared key:** requests only count if both Macs use the same key, so other nearby Macs running DeviceHop can't take your keyboard. The link between Macs is also encrypted: the first time two Macs talk, macOS asks you to accept a Bluetooth pairing request between them. Set it under *Set Shared Key…*.
-- **Devices to switch:** choose which paired devices move. Anything named "Magic" is selected by default.
+- **Shared key:** requests only count if both Macs use the same key, so other nearby Macs running DeviceHop can't take your keyboard. The link between Macs is also encrypted: the first time two Macs talk, macOS asks you to accept a Bluetooth pairing request between them. Set it under **Settings**.
+- **Keyboard & mouse:** only Bluetooth keyboards and mice (and trackpads) are listed and moved. Other Bluetooth devices, such as headphones, speakers and phones, are ignored. Each one has a switch, in case you want to move just one of them.
 
 The menu-bar panel shows each device's connection and battery level, lists the other Macs it found with **Send** and **Take** buttons, and keeps the shared key and update settings under **Settings**. If macOS asks for a passkey while pairing, it appears in the panel. Type it on the keyboard and press Return.
 

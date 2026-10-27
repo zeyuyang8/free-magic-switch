@@ -85,9 +85,9 @@ struct ContentView: View {
     // MARK: Devices
 
     private var devicesSection: some View {
-        Section(title: "Devices to switch", trailing: "\(model.selectedCount) selected") {
+        Section(title: "Keyboard & mouse", trailing: "\(model.selectedCount) selected") {
             if model.devices.isEmpty {
-                Text("No paired Bluetooth devices")
+                Text("No Bluetooth keyboard or mouse on this Mac")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 6)

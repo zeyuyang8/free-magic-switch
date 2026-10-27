@@ -43,7 +43,7 @@ final class AppModel: ObservableObject {
         }
         refreshDevices()
         if d.stringArray(forKey: "devices") == nil {
-            selected = Set(devices.filter { $0.name.localizedCaseInsensitiveContains("magic") }.map(\.address))
+            selected = Set(devices.map(\.address))
             d.set(Array(selected).sorted(), forKey: "devices")
         }
 
@@ -69,10 +69,17 @@ final class AppModel: ObservableObject {
 
     func refreshDevices() {
         guard !preview else { return }
+        let order: [BTDevice.Kind] = [.keyboard, .mouse, .trackpad]
         devices = bt.pairedDevices().sorted { a, b in
-            let sa = selected.contains(a.address), sb = selected.contains(b.address)
-            return sa != sb ? sa : a.name.localizedCompare(b.name) == .orderedAscending
+            let ka = order.firstIndex(of: a.kind)!, kb = order.firstIndex(of: b.kind)!
+            return ka != kb ? ka < kb : a.name.localizedCompare(b.name) == .orderedAscending
         }
+    }
+
+    /// Selected addresses that are currently paired keyboards or mice here.
+    private func switchable() -> [String] {
+        refreshDevices()
+        return devices.map(\.address).filter(selected.contains)
     }
 
     func setSelected(_ address: String, _ on: Bool) {
@@ -83,8 +90,8 @@ final class AppModel: ObservableObject {
 
     func send(to peer: String) {
         guard let peers else { return }
-        let addrs = Array(selected)
-        guard !addrs.isEmpty else { status = "Choose at least one device"; return }
+        let addrs = switchable()
+        guard !addrs.isEmpty else { status = "No keyboard or mouse here to send"; return }
         begin("Contacting \(peer)…")
         peers.send(Message(cmd: "ping", key: sharedKey), to: peer) { [weak self] reply in
             guard let self else { return }
@@ -141,9 +148,9 @@ final class AppModel: ObservableObject {
         case "ping":
             reply(Message(cmd: "reply", ok: !busy, error: busy ? "Other Mac is busy" : nil))
         case "release":
-            let addrs = Array(selected)
+            let addrs = switchable()
             guard !busy, !addrs.isEmpty else {
-                reply(Message(cmd: "reply", ok: false, error: busy ? "Other Mac is busy" : "Other Mac has no devices selected"))
+                reply(Message(cmd: "reply", ok: false, error: busy ? "Other Mac is busy" : "Other Mac has no keyboard or mouse"))
                 return
             }
             let failed = bt.release(addrs)
@@ -220,9 +227,8 @@ final class AppModel: ObservableObject {
 
     private func loadPreviewData() {
         devices = [
-            BTDevice(address: "9c-58-3c-e9-da-c1", name: "Magic Keyboard", connected: true, battery: 94),
-            BTDevice(address: "bc-89-a7-d9-0f-ba", name: "Magic Mouse", connected: true, battery: 23),
-            BTDevice(address: "ac-bc-b5-ea-95-43", name: "AirPods Pro", connected: false, battery: nil),
+            BTDevice(address: "9c-58-3c-e9-da-c1", name: "Magic Keyboard", kind: .keyboard, connected: true, battery: 94),
+            BTDevice(address: "bc-89-a7-d9-0f-ba", name: "Magic Mouse", kind: .mouse, connected: true, battery: 23),
         ]
         selected = ["9c-58-3c-e9-da-c1", "bc-89-a7-d9-0f-ba"]
         peerNames = ["Studio Mac mini"]

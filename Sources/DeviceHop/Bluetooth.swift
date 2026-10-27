@@ -3,21 +3,37 @@ import IOBluetooth
 import IOKit
 
 struct BTDevice: Identifiable {
+    enum Kind { case keyboard, mouse, trackpad }
+
     let address: String
     let name: String
+    let kind: Kind
     let connected: Bool
     var battery: Int?
 
     var id: String { address }
 
     var symbol: String {
-        let n = name.lowercased()
-        if n.contains("keyboard") { return "keyboard" }
-        if n.contains("mouse") { return "magicmouse" }
-        if n.contains("trackpad") { return "rectangle.and.hand.point.up.left" }
-        if n.contains("airpods") || n.contains("headphone") || n.contains("beats") { return "headphones" }
-        return "dot.radiowaves.left.and.right"
+        switch kind {
+        case .keyboard: return "keyboard"
+        case .mouse: return "magicmouse"
+        case .trackpad: return "rectangle.and.hand.point.up.left"
+        }
     }
+}
+
+/// Keyboards and pointing devices only; everything else paired to the Mac is ignored.
+private func inputKind(of d: IOBluetoothDevice) -> BTDevice.Kind? {
+    let name = (d.name ?? "").lowercased()
+    if name.contains("trackpad") { return .trackpad }
+    if d.deviceClassMajor == BluetoothDeviceClassMajor(kBluetoothDeviceClassMajorPeripheral) {
+        let minor = d.deviceClassMinor & 0x30
+        if minor & 0x10 != 0 { return .keyboard }
+        if minor & 0x20 != 0 { return .mouse }
+    }
+    if name.contains("keyboard") { return .keyboard }
+    if name.contains("mouse") { return .mouse }
+    return nil
 }
 
 func normalizeAddress(_ a: String) -> String {
@@ -35,9 +51,9 @@ final class Bluetooth: NSObject, IOBluetoothDevicePairDelegate {
         let battery = batteryLevels()
         let list = (IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice]) ?? []
         return list.compactMap { d in
-            guard let raw = d.addressString else { return nil }
+            guard let raw = d.addressString, let kind = inputKind(of: d) else { return nil }
             let addr = normalizeAddress(raw)
-            return BTDevice(address: addr, name: d.name ?? raw, connected: d.isConnected(), battery: battery[addr])
+            return BTDevice(address: addr, name: d.name ?? raw, kind: kind, connected: d.isConnected(), battery: battery[addr])
         }
     }
 
